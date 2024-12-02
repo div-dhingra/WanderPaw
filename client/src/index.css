@@ -1,0 +1,18 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #f0f0f0; /* 灰色背景 */
+  font-family: Arial, sans-serif; /* 全局字体 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+button {
+  font-family: inherit; /* 让按钮字体和全局一致 */
+  cursor: pointer;
+}
