@@ -1,37 +1,51 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import bike from '../assets/animation/doro-bike.gif';
+import board from '../assets/animation/doro-board.gif';
+import dorodash from '../assets/animation/doro-dorodash.gif';
+import hunger from '../assets/animation/doro-hunger.gif';
+import run from '../assets/animation/doro-run.gif';
 
-const Pet = ({ position, onPositionChange }) => {
-  const [currentPosition, setCurrentPosition] = useState(position);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const newX = currentPosition.x + Math.random() * 50 - 25;
-      const newY = currentPosition.y + Math.random() * 50 - 25;
-      const boundedX = Math.max(0, Math.min(window.innerWidth - 100, newX));
-      const boundedY = Math.max(0, Math.min(window.innerHeight - 100, newY));
-      const updatedPosition = { x: boundedX, y: boundedY };
-      setCurrentPosition(updatedPosition);
-      onPositionChange(updatedPosition); // 通知父组件
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [currentPosition, onPositionChange]);
+/**
+ * Pet Component
+ * Displays the pet with animations based on its current action.
+ */
+const Pet = ({ action }) => {
+  // Map actions to corresponding GIFs
+  const getPetAnimation = () => {
+    switch (action) {
+      case 'bike':
+        return bike;
+      case 'board':
+        return board;
+      case 'dorodash':
+        return dorodash;
+      case 'hunger':
+        return hunger;
+      case 'run':
+        return run;
+      default:
+        return dorodash; // Default animation
+    }
+  };
 
   return (
     <div
       style={{
         position: 'absolute',
-        top: `${currentPosition.y}px`,
-        left: `${currentPosition.x}px`,
-        transition: 'all 0.5s ease',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '200px',
+        height: '200px',
       }}
     >
       <img
-        src="https://via.placeholder.com/100?text=Pet" // 替换成实际宠物图片路径
-        alt="Pet"
+        src={getPetAnimation()}
+        alt="Pet Animation"
         style={{
-          width: '100px',
-          height: '100px',
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
         }}
       />
     </div>
