@@ -5,7 +5,7 @@ import SubMenu from './components/SubMenu';
 import PopupWindow from './components/PopupWindow';
 
 const App = () => {
-  const useDummyData = true; // 用于控制是否使用模拟数据
+  const useDummyData = true; // use dummydata or not
   const [activeMenu, setActiveMenu] = useState(null);
   const [popupContent, setPopupContent] = useState(null);
   const [petPosition, setPetPosition] = useState({
@@ -21,9 +21,9 @@ const App = () => {
   const [petAction, setPetAction] = useState('dorodash');
   const [isMenuVisible, setIsMenuVisible] = useState(false); // Track whether the menu is visible
   const [isSubMenuHovered, setIsSubMenuHovered] = useState(false); // Track whether the submenu is being hovered
-  const [showNotification, setShowNotification] = useState(false); // 控制提示是否显示
-  const [notificationMessage, setNotificationMessage] = useState(''); // 通知内容
-  const [isTestMode, setIsTestMode] = useState(false); // 是否处于测试模式
+  const [showNotification, setShowNotification] = useState(false); // 
+  const [notificationMessage, setNotificationMessage] = useState(''); // 
+  const [isTestMode, setIsTestMode] = useState(false); // 
 
   const handleMenuClick = (menu) => {
     setActiveMenu(menu === activeMenu ? null : menu);
@@ -43,11 +43,10 @@ const App = () => {
     }
   };
 
-const handleOptionClick = (option) => {
-  console.log('Option clicked:', option); // 添加调试信息
+  const handleOptionClick = (option) => {
+    console.log('Option clicked:', option); // 
 
-  let actionMessage = '';
-  if (useDummyData) {
+    let actionMessage = '';
     switch (option) {
       case 'Feed':
         setStatus((prevStatus) => {
@@ -91,35 +90,35 @@ const handleOptionClick = (option) => {
         console.log(`Unknown option: ${option}`);
     }
 
-    // 显示完成提示
-    if (actionMessage) {
-      console.log('Setting notification:', actionMessage); // 添加调试信息
-      setNotificationMessage(actionMessage);
-      setShowNotification(true);
-      setTimeout(() => setShowNotification(false), 2000); // 2秒后隐藏通知
-    }
-  } else {
-    // Future API call
-    fetch('https://dummyapi.com/endpoint', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ action: option }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log('API response:', data);
-        setNotificationMessage(data.message || 'Action completed');
+    // 
+    if (useDummyData) {
+      if (actionMessage) {
+        console.log('Setting notification:', actionMessage); // 
+        setNotificationMessage(actionMessage);
         setShowNotification(true);
-        setTimeout(() => setShowNotification(false), 2000);
+        setTimeout(() => setShowNotification(false), 2000); // 2sec
+      }
+    } else {
+      // Future API call
+      fetch('https://dummyapi.com/endpoint', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: option }),
       })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
-  }
-};
-
+        .then((response) => response.json())
+        .then((data) => {
+          console.log('API response:', data);
+          setNotificationMessage(data.message || 'Action completed');
+          setShowNotification(true);
+          setTimeout(() => setShowNotification(false), 2000);
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
+    }
+  };
 
   return (
     <div>
@@ -149,18 +148,18 @@ const handleOptionClick = (option) => {
           <div
             style={{
               position: 'absolute',
-              top: petPosition.y - 70, // 显示在宠物上方
+              top: petPosition.y - 70, // 
               left: petPosition.x,
               transform: 'translate(-50%, 0)',
-              background: 'rgba(0, 0, 0, 0.75)', // 使用透明黑色背景
-              color: '#fff', // 白色文字
+              background: 'rgba(0, 0, 0, 0.75)', // 
+              color: '#fff', // white
               padding: '10px 20px',
               boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)',
               borderRadius: '8px',
               zIndex: 1000,
               fontSize: '14px',
               textAlign: 'center',
-              width: 'max-content', // 根据内容自动调整宽度
+              width: 'max-content', // 
             }}
           >
             {notificationMessage}
@@ -171,7 +170,7 @@ const handleOptionClick = (option) => {
       {/* Sub Menu */}
       <SubMenu
         activeMenu={activeMenu}
-        position={{ x: petPosition.x + 10, y: petPosition.y + 170 }} // 更新子菜单的位置
+        position={{ x: petPosition.x + 10, y: petPosition.y + 170 }} // submenu position
         status={status}
         onOptionClick={handleOptionClick}
         onClose={handleMenuClose}
