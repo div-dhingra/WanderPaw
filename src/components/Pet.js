@@ -40,7 +40,7 @@ const Pet = ({ action, position, onPositionChange }) => {
 
   // Randomly move the pet on the screen
   const movePetRandomly = () => {
-    if (currentAction !== 'idle' && currentAction !== 'sleep') {
+    if (currentAction !== 'idle' && currentAction !== 'sleep' && currentAction !== 'hunger') {
       const offsetX = Math.random() * 300 - 150; // Random offset between -150 and 150
       const offsetY = Math.random() * 300 - 150; // Random offset between -150 and 150
 
