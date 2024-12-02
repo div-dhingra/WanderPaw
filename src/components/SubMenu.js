@@ -9,10 +9,11 @@ const SubMenu = ({ activeMenu, onOptionClick, onClose, position, status }) => {
   if (!activeMenu) return null; // Do not render if no menu is active
 
   // Menu options for Interact and Settings menus
-  const options = {
-    Interact: ['Feed', 'Play', 'Pet'], // Options for Interact menu
-    Settings: ['Sound', 'Background', 'Exit'], // Options for Settings menu
-  };
+ const options = {
+  Interact: ['Feed', 'Play', 'Pet'], 
+  Settings: ['Sound', 'Background', 'Test Mode', 'Reset Status'],
+};
+
 
   // Determines progress bar color based on status type
   const getColor = (key) => {
@@ -32,7 +33,7 @@ const SubMenu = ({ activeMenu, onOptionClick, onClose, position, status }) => {
     <div
       style={{
         position: 'absolute',
-        top: `${position.y + 150}px`, // Adjust position to be slightly above the pet
+        top: `${position.y}px`,
         left: `${position.x}px`,
         transform: 'translateX(-50%)',
         background: 'white',
@@ -40,7 +41,7 @@ const SubMenu = ({ activeMenu, onOptionClick, onClose, position, status }) => {
         borderRadius: '5px',
         boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)',
         zIndex: 1000,
-        width: activeMenu === 'Status' ? '200px' : '150px', // Adjust width for status menu
+        width: '200px', // 增加宽度以适应更多选项
       }}
     >
       {/* Close button for the menu */}
@@ -107,6 +108,7 @@ const SubMenu = ({ activeMenu, onOptionClick, onClose, position, status }) => {
               border: 'none',
               cursor: 'pointer',
               textAlign: 'left',
+              width: '100%', // 确保按钮占据菜单的宽度
             }}
           >
             {option}
