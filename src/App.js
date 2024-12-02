@@ -5,21 +5,21 @@ import SubMenu from './components/SubMenu';
 import PopupWindow from './components/PopupWindow';
 
 const App = () => {
-  const [activeMenu, setActiveMenu] = useState(null); // 当前激活的菜单
-  const [popupContent, setPopupContent] = useState(null); // 弹窗内容
+  const [activeMenu, setActiveMenu] = useState(null); // Currently active menu
+  const [popupContent, setPopupContent] = useState(null); // Pop-up content
   const [petPosition, setPetPosition] = useState({
-    x: window.innerWidth / 2 - 50, // 初始水平居中
-    y: window.innerHeight / 2 - 50, // 初始垂直居中
+    x: window.innerWidth / 2 - 50, // Initial horizontal centering
+    y: window.innerHeight / 2 - 50, // Initial vertical centering
   });
-  const [subMenuPosition, setSubMenuPosition] = useState({ x: 0, y: 0 }); // 子菜单位置
+  const [subMenuPosition, setSubMenuPosition] = useState({ x: 0, y: 0 }); // submenu Position
   const [status, setStatus] = useState({
-    Health: 80, // 初始健康值
-    Hunger: 50, // 初始饥饿值
-    Mood: 70, // 初始心情值
+    Health: 80, // Initial Health
+    Hunger: 50, // Initial Hunger
+    Mood: 70, // Initial Mood
   });
 
   /**
-   * 模拟 API 调用，未来可替换为真实后端接口
+   * Simulate API calls, which can be replaced with real backend interfaces in the future
    * @param {string} action - 执行的动作
    */
   const simulateApiCall = async (action) => {
@@ -31,26 +31,26 @@ const App = () => {
           Hunger: Math.floor(Math.random() * 100),
           Mood: Math.floor(Math.random() * 100),
         });
-      }, 1000); // 模拟 1 秒延迟
+      }, 1000); // Simulate 1 second delay
     });
   };
 
   /**
-   * 菜单选项点击处理
-   * 根据选项切换动画
+   * Menu option click processing
+   * Switch animations based on options
    * @param {string} option - 选项名称
    */
   const handleOptionClick = async (option) => {
     if (activeMenu === 'Interact') {
       try {
         const updatedStatus = await simulateApiCall(option);
-        setStatus(updatedStatus); // 更新状态
-        setPopupContent(`Successfully executed: ${option}`); // 显示成功消息
+        setStatus(updatedStatus); // update status
+        setPopupContent(`Successfully executed: ${option}`); // 
       } catch (error) {
-        setPopupContent(`Error: Failed to execute ${option}`); // 显示错误消息
+        setPopupContent(`Error: Failed to execute ${option}`); // 
       }
     }
-    setActiveMenu(null); // 关闭菜单
+    setActiveMenu(null); // turn off menu
   };
 
   const handleMenuClick = (menu) => {
