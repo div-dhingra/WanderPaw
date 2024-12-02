@@ -17,7 +17,6 @@ const App = () => {
     Hunger: 50, // 初始饥饿值
     Mood: 70, // 初始心情值
   });
-  const [petAction, setPetAction] = useState('dorodash'); // 初始动画
 
   /**
    * 模拟 API 调用，未来可替换为真实后端接口
@@ -45,25 +44,6 @@ const App = () => {
     if (activeMenu === 'Interact') {
       try {
         const updatedStatus = await simulateApiCall(option);
-
-        // 设置宠物动作
-        switch (option) {
-          case 'Feed':
-            setPetAction('hunger');
-            break;
-          case 'Play':
-            setPetAction('run');
-            break;
-          case 'Bike':
-            setPetAction('bike');
-            break;
-          case 'Board':
-            setPetAction('board');
-            break;
-          default:
-            setPetAction('dorodash');
-        }
-
         setStatus(updatedStatus); // 更新状态
         setPopupContent(`Successfully executed: ${option}`); // 显示成功消息
       } catch (error) {
@@ -96,7 +76,7 @@ const App = () => {
   return (
     <div>
       {/* Pet Component */}
-      <Pet position={petPosition} onPositionChange={updatePetPosition} action={petAction} />
+      <Pet position={petPosition} onPositionChange={updatePetPosition} />
 
       {/* Menu Bar */}
       <MenuBar
