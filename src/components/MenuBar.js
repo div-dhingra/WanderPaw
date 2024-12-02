@@ -1,42 +1,38 @@
 import React from 'react';
+import statusIcon from '../assets/icons/status-icon.svg';
+import interactIcon from '../assets/icons/interact-icon.png';
+import settingsIcon from '../assets/icons/settings-icon.png';
 
-const MenuBar = ({ position, onMenuClick, onSubMenuPositionChange }) => {
-  const menuItems = ['Status', 'Interact', 'Settings'];
-
+const MenuBar = ({ petPosition, onMenuClick }) => {
   return (
     <div
       style={{
         position: 'absolute',
-        top: `${position.y + 120}px`, // 菜单显示在宠物下方
-        left: `${position.x}px`,
+        top: `${petPosition.y + 100}px`, 
+        left: `${petPosition.x}px`,
         transform: 'translateX(-50%)',
-        background: 'rgba(0, 0, 0, 0.5)',
-        padding: '10px',
-        borderRadius: '10px',
         display: 'flex',
-        gap: '15px',
-        zIndex: 100,
+        gap: '10px',
+        padding: '10px',
+        backgroundColor: 'rgba(255, 255, 255, 0.8)', 
+        borderRadius: '8px', 
+        boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.2)', 
       }}
     >
-      {menuItems.map((item, index) => (
-        <button
-          key={item}
-          onMouseEnter={(e) => {
-            const rect = e.target.getBoundingClientRect();
-            onSubMenuPositionChange({ x: rect.x + rect.width / 2, y: rect.y });
-          }}
-          onClick={() => onMenuClick(item)}
-          style={{
-            background: 'white',
-            border: '1px solid #ccc',
-            borderRadius: '5px',
-            padding: '5px 10px',
-            cursor: 'pointer',
-          }}
-        >
-          {item}
-        </button>
-      ))}
+      {/* Status Button */}
+      <button onClick={() => onMenuClick('Status')}>
+        <img src={statusIcon} alt="Status" style={{ width: '30px', height: '30px' }} />
+      </button>
+
+      {/* Interact Button */}
+      <button onClick={() => onMenuClick('Interact')}>
+        <img src={interactIcon} alt="Interact" style={{ width: '30px', height: '30px' }} />
+      </button>
+
+      {/* Settings Button */}
+      <button onClick={() => onMenuClick('Settings')}>
+        <img src={settingsIcon} alt="Settings" style={{ width: '30px', height: '30px' }} />
+      </button>
     </div>
   );
 };

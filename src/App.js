@@ -5,53 +5,45 @@ import SubMenu from './components/SubMenu';
 import PopupWindow from './components/PopupWindow';
 
 const App = () => {
-  const [activeMenu, setActiveMenu] = useState(null); // Currently active menu
-  const [popupContent, setPopupContent] = useState(null); // Pop-up content
+  const useDummyData = true; // Set to false to use the API when it's ready
+  const [activeMenu, setActiveMenu] = useState(null);
+  const [popupContent, setPopupContent] = useState(null);
   const [petPosition, setPetPosition] = useState({
-    x: window.innerWidth / 2 - 50, // Initial horizontal centering
-    y: window.innerHeight / 2 - 50, // Initial vertical centering
+    x: window.innerWidth / 2 - 50,
+    y: window.innerHeight / 2 - 50,
   });
-  const [subMenuPosition, setSubMenuPosition] = useState({ x: 0, y: 0 }); // submenu Position
+  const [subMenuPosition, setSubMenuPosition] = useState({ x: 0, y: 0 });
   const [status, setStatus] = useState({
-    Health: 80, // Initial Health
-    Hunger: 50, // Initial Hunger
-    Mood: 70, // Initial Mood
+    Health: 80,
+    Hunger: 50,
+    Mood: 70,
   });
+  const [petAction, setPetAction] = useState('dorodash');
+  const [isMenuVisible, setIsMenuVisible] = useState(false); // Track whether the menu is visible
+  const [isSubMenuHovered, setIsSubMenuHovered] = useState(false); // Track whether the submenu is being hovered
+  
+  const handleOptionClick = (option) => {
+  if (useDummyData) {
+    console.log(`Selected: ${option}`);
+  } else {
+    // Future API call
+    fetch('https://dummyapi.com/endpoint', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action: option }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('API response:', data);
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+  }
+};
 
-  /**
-   * Simulate API calls, which can be replaced with real backend interfaces in the future
-   * @param {string} action - 执行的动作
-   */
-  const simulateApiCall = async (action) => {
-    console.log(`Simulating API request for action: ${action}`);
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          Health: Math.floor(Math.random() * 100),
-          Hunger: Math.floor(Math.random() * 100),
-          Mood: Math.floor(Math.random() * 100),
-        });
-      }, 1000); // Simulate 1 second delay
-    });
-  };
-
-  /**
-   * Menu option click processing
-   * Switch animations based on options
-   * @param {string} option - 选项名称
-   */
-  const handleOptionClick = async (option) => {
-    if (activeMenu === 'Interact') {
-      try {
-        const updatedStatus = await simulateApiCall(option);
-        setStatus(updatedStatus); // update status
-        setPopupContent(`Successfully executed: ${option}`); // 
-      } catch (error) {
-        setPopupContent(`Error: Failed to execute ${option}`); // 
-      }
-    }
-    setActiveMenu(null); // turn off menu
-  };
 
   const handleMenuClick = (menu) => {
     setActiveMenu(menu === activeMenu ? null : menu);
@@ -75,24 +67,38 @@ const App = () => {
 
   return (
     <div>
-      {/* Pet Component */}
-      <Pet position={petPosition} onPositionChange={updatePetPosition} />
+      <div
+        onMouseEnter={() => setIsMenuVisible(true)} // Show menu when mouse enters pet area
+        onMouseLeave={() => {
+          if (!isSubMenuHovered) {
+            setIsMenuVisible(false); // Hide menu only if submenu is not being hovered
+          }
+        }}
+        style={{ position: 'relative', display: 'inline-block' }}
+      >
+        {/* Pet Component */}
+        <Pet position={petPosition} onPositionChange={updatePetPosition} action={petAction} />
 
-      {/* Menu Bar */}
-      <MenuBar
-        position={petPosition}
-        onMenuClick={handleMenuClick}
-        onSubMenuPositionChange={updateSubMenuPosition}
-      />
+        {/* Menu Bar - only visible when mouse is over the pet */}
+        {isMenuVisible && (
+          <MenuBar
+            petPosition={petPosition}
+            onMenuClick={handleMenuClick}
+            onSubMenuPositionChange={updateSubMenuPosition}
+          />
+        )}
+      </div>
 
-      {/* Sub Menu */}
       <SubMenu
-        activeMenu={activeMenu}
-        position={subMenuPosition}
-        status={status}
-        onOptionClick={handleOptionClick}
-        onClose={handleMenuClose}
-      />
+      activeMenu={activeMenu}
+  position={{ x: petPosition.x + 10, y: petPosition.y + 10 }} // 更新子菜单的位置
+  status={status}
+  onOptionClick={(option) => console.log(`Selected: ${option}`)}
+  onClose={handleMenuClose}
+  onMouseEnter={() => setIsSubMenuHovered(true)} // Mark submenu as hovered
+  onMouseLeave={() => setIsSubMenuHovered(false)} // Mark submenu as not hovered
+/>
+
 
       {/* Popup Window */}
       <PopupWindow title="Action" content={popupContent} onClose={closePopup} />

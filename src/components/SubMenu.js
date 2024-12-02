@@ -32,7 +32,7 @@ const SubMenu = ({ activeMenu, onOptionClick, onClose, position, status }) => {
     <div
       style={{
         position: 'absolute',
-        top: `${position.y}px`,
+        top: `${position.y + 150}px`, // Adjust position to be slightly above the pet
         left: `${position.x}px`,
         transform: 'translateX(-50%)',
         background: 'white',
