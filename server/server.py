@@ -1,3 +1,5 @@
+# NOTE: INCREMENTAL COMMITS: Code out entire thing, then delete portions to build up incremental commits (doing so AFTER I'm already done with the entire thing :)
+
 # Import regex module for backend input-validation from request-headers (for non-frontend-called (i.e. frontend validation won't be present then), 
 # intercepted/'direct' API-requests)
 import re
@@ -43,22 +45,36 @@ CREATE_USERS_TABLE = (
             id SERIAL PRIMARY KEY, -- Unique user identifier for the table (hence SERIAL | unrelated to input)
             user_name TEXT NOT NULL UNIQUE, -- username
             pet_health INT NOT NULL DEFAULT 100, -- pet's current health level | 0 - 100
-            pet_hunger INT NOT NULL DEFAULT 10, -- pet's current hunger level | 0 - 100 
-            pet_mood INT NOT NULL DEFAULT 10 -- pet's current mood level | 0 - 100
+            pet_hunger INT NOT NULL DEFAULT 10, -- pet's current hunger level | 0 - 10
+            pet_mood INT NOT NULL DEFAULT 10 -- pet's current mood level | 0 - 10
         );                        
     """
 )
 
 # Create Initial Users Table (Dummy User inside for testing)
-def setInitialUserTable():
+def setInitialUsersTable():
     cursor.execute(CREATE_USERS_TABLE) # Insert dummy user into table
     cursor.execute("SELECT COUNT(*) FROM users;")
 
     row_count = cursor.fetchone()[0]
 
     if row_count == 0:
-        cursor.execute("INSERT INTO users (user_name) VALUES (%s);", ("andrews-covalent-bond",))
+        cursor.execute("INSERT INTO users (user_name) VALUES (%s);", ("andrews_covalent_bond",))
         conn.commit() # Commit this change to GIT in supabase
         print("Initial Users Table Create") 
  
-setInitialUserTable()
+setInitialUsersTable()
+
+# Get health of this user
+# NOTE: Get-requests don't allow a request-body (RESTful principles): Use url-query-params (?user_name=andrews_covalent_bond")
+@app.get("/api/users/health")
+def getPetHealth():
+    try:
+        user_name = request.args.get("user_name") # from url-path query params
+        cursor.execute("SELECT pet_health from users WHERE user_name=%s", (user_name,)) 
+        pet_health = cursor.fetchone()[0] # returns tuple of values
+        # '%s' parameterized query (psycopg2) to prevent SQL-string-injections attacks (i.e. sanitized via ` '/ ` escape before execution)
+        return jsonify({"health": pet_health}), 200
+    
+    except Exception as e: # Handle database errors
+        return jsonify({"error": str(e)}), 500        
