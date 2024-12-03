@@ -45,8 +45,9 @@ CREATE_USERS_TABLE = (
             id SERIAL PRIMARY KEY, -- Unique user identifier for the table (hence SERIAL | unrelated to input)
             user_name TEXT NOT NULL UNIQUE, -- username
             pet_health INT NOT NULL DEFAULT 100, -- pet's current health level | 0 - 100
-            pet_hunger INT NOT NULL DEFAULT 10, -- pet's current hunger level | 0 - 10
+            pet_hunger INT NOT NULL DEFAULT 0, -- pet's current hunger level | 0 - 10
             pet_mood INT NOT NULL DEFAULT 10 -- pet's current mood level | 0 - 10
+            creation_time DATETIME DEFAULT NOW() -- time account was created
         );                        
     """
 )
@@ -65,16 +66,26 @@ def setInitialUsersTable():
  
 setInitialUsersTable()
 
-# Get health of this user
-# NOTE: Get-requests don't allow a request-body (RESTful principles): Use url-query-params (?user_name=andrews_covalent_bond")
-@app.get("/api/users/health")
-def getPetHealth():
+# Get details of this user's pet (health, hunger, mood)
+# NOTE: Get-requests don't allow a request-body (RESTful principles): Use url-query-params 
+# * (?user_name=andrews_covalent_bond")
+@app.get("/api/users")
+def getPetDetails():
     try:
         user_name = request.args.get("user_name") # from url-path query params
-        cursor.execute("SELECT pet_health from users WHERE user_name=%s", (user_name,)) 
-        pet_health = cursor.fetchone()[0] # returns tuple of values
+        cursor.execute("SELECT pet_health, pet_hunger, pet_mood from users WHERE user_name=%s", (user_name,)) 
+
+        # returns tuple of values
+        pet_health = cursor.fetchone()[0] 
+        pet_hunger = cursor.fetchone()[1]
+        pet_mood = cursor.fetchone()[2]
+
         # '%s' parameterized query (psycopg2) to prevent SQL-string-injections attacks (i.e. sanitized via ` '/ ` escape before execution)
-        return jsonify({"health": pet_health}), 200
+        return jsonify({"petDetails": {"Health": pet_health, "Hunger": pet_hunger, "Mood": pet_mood}}), 200
     
     except Exception as e: # Handle database errors
-        return jsonify({"error": str(e)}), 500        
+        return jsonify({"error": str(e)}), 500       
+
+
+
+
