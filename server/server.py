@@ -18,10 +18,7 @@ load_dotenv(dotenv_path=".dbenv")
 # Import 'psycopg2' Module to Connect Database to our Flask-Python Backend
 import psycopg2
 
-# Module for hashing passwords
-# import bcrypt
-
-# So my frontend can make API-calls to my backend
+# So my frontend can make API-calls to my backend (cross-origin (i.e. different domains) resource-sharing)
 from flask_cors import CORS
 
 from collections import OrderedDict
@@ -36,3 +33,32 @@ connection_string = f"""gssencmode=disable user={os.getenv("SUPABASE_USER")} pas
 
 conn = psycopg2.connect(connection_string)
 cursor = conn.cursor()
+
+# Users (non-serial attributes): UNIQUE username | is_activated_account | books_checked_out | books_overdue |
+# password_hash BYTEA NOT NULL, -- password for the user (hashed for security) [bytea-format]
+# Dummy to single user for now (just update / read from this user's specific endpoint [check discord for api-endpoitns])
+CREATE_USERS_TABLE = (
+    """
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY, -- Unique user identifier for the table (hence SERIAL | unrelated to input)
+            user_name TEXT NOT NULL UNIQUE, -- username
+            pet_health INT NOT NULL DEFAULT 100, -- pet's current health level | 0 - 100
+            pet_hunger INT NOT NULL DEFAULT 10, -- pet's current hunger level | 0 - 100 
+            pet_mood INT NOT NULL DEFAULT 10 -- pet's current mood level | 0 - 100
+        );                        
+    """
+)
+
+# Create Initial Users Table (Dummy User inside for testing)
+def setInitialUserTable():
+    cursor.execute(CREATE_USERS_TABLE) # Insert dummy user into table
+    cursor.execute("SELECT COUNT(*) FROM users;")
+
+    row_count = cursor.fetchone()[0]
+
+    if row_count == 0:
+        cursor.execute("INSERT INTO users (user_name) VALUES (%s);", ("andrews-covalent-bond",))
+        conn.commit() # Commit this change to GIT in supabase
+        print("Initial Users Table Create") 
+ 
+setInitialUserTable()
