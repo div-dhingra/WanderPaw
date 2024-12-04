@@ -115,3 +115,21 @@ def updatePetHealth(user_name : str):
     except Exception as e: # Handle database exceptions for caught-errors
         conn.rollback() # Undo the committed SQL-changes for this CURRENT SET OF COMMITS / Transaction SESSION
         return jsonify({"error": str(e)}), 500
+
+# Update hunger of pet (from feeding it)
+# NOTE: 'hunger' of pet is periodically (i.e. recurring interval-wise) increased if not fed for 'x amount of time'
+@app.patch("/api/users/<user_name>/update-pet-hunger") # user_id is pulled from the query-param-path, hence its in the function-arg directly
+def updatePetHunger(user_name : str):
+
+    request_header_data = request.get_json()
+    pet_hunger : int = request_header_data.get("newHunger")
+
+    try:
+        cursor.execute("UPDATE users SET pet_hunger = %s WHERE user_name = %s", (pet_hunger, user_name,))
+        conn.commit() # Commit to remote Supabase-Database-Git Repo :)
+
+        return jsonify({"message": f"User {user_name} pet hunger status updated to {pet_hunger}"}), 200
+
+    except Exception as e: # Handle database exceptions for caught-errors
+        conn.rollback() # Undo the committed SQL-changes for this CURRENT SET OF COMMITS / Transaction SESSION
+        return jsonify({"error": str(e)}), 500
