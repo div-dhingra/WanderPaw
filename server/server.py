@@ -36,6 +36,20 @@ connection_string = f""" gssencmode=disable
 conn = psycopg2.connect(connection_string)
 cursor = conn.cursor()
 
+# : Try to fix this issue with supabase x flask (probably an issue with my SQL Queries Syntax) [although I just updated the value in 
+# : supabase, itself so no need | just aligned here for consistency purposes :)]
+
+# TODO: Test the patch-endpoints on my frontend, and (one by one) commit them to github branch (git branch backend-setup)
+# TODO: ^^^ incremental commits for MODULARITY && READABILITY && EASY/EFFECTIVE CODE REVIEWS!!!
+# 1 Pull request for ENTIRE FEATURE, incremental commits throughout
+# If a feature is very large, it's common to split it into smaller PRs, each representing a meaningful, independent piece of the larger feature :)
+
+# TODO: Do git status on the frontend to see what I changed, and only add what is needed (i.e. App.js 'Fetch initial petch-details' logic)
+
+# TODO: Then add all patch-requests in my useEffect (clean-up function) SET-INTERVAL, that periodically update the health, hunger, mood of the pet.
+
+
+
 # Users (non-serial attributes): UNIQUE username | is_activated_account | books_checked_out | books_overdue |
 # password_hash BYTEA NOT NULL, -- password for the user (hashed for security) [bytea-format]
 # # Dummy to single user for now (just update / read from this user's specific endpoint [check discord for api-endpoitns])
@@ -83,3 +97,21 @@ def getPetDetails():
     
     except Exception as e: # Handle database errors
         return jsonify({"error": str(e)}), 500       
+
+# Update health of pet (from playing with it / feeding it)
+# Health = f(Hunger, Mood)
+@app.patch("/api/users/<user_name>/update-pet-health") # user_id is pulled from the query-param-path, hence its in the function-arg directly
+def updatePetHealth(user_name : str):
+
+    request_header_data = request.get_json()
+    new_health : int = request_header_data.get("newHealth")
+
+    try:
+        cursor.execute("UPDATE users SET pet_health = %s WHERE user_name = %s", (new_health, user_name,))
+        conn.commit() # Commit to remote Supabase-Database-Git Repo :)
+
+        return jsonify({"message": f"User {user_name} pet health status updated to {new_health}"}), 200
+
+    except Exception as e: # Handle database exceptions for caught-errors
+        conn.rollback() # Undo the committed SQL-changes for this CURRENT SET OF COMMITS / Transaction SESSION
+        return jsonify({"error": str(e)}), 500
