@@ -7,7 +7,7 @@ import json # Module to read JSON objects, and convert them to usable JS-objects
 
 import random # Module to generate random values
 
-import datetime
+from datetime import datetime
 
 # Import Flask Class/Module/Library
 from flask import Flask, jsonify, request
@@ -50,7 +50,7 @@ cursor = conn.cursor()
 
 # TODO: Then add all patch-requests in my useEffect (clean-up function) SET-INTERVAL, that periodically update the health, hunger, mood of the pet.
 
-
+# Separate Columns: Use separate hunger_last_updated and mood_last_updated columns unless you specifically need to store additional metadata with hunger and mood. Separate columns offer simplicity and better performance for most use cases.
 
 # Users (non-serial attributes): UNIQUE username | is_activated_account | books_checked_out | books_overdue |
 # password_hash BYTEA NOT NULL, -- password for the user (hashed for security) [bytea-format]
@@ -63,6 +63,8 @@ CREATE_USERS_TABLE = (
             pet_health INT NOT NULL DEFAULT 100, -- pet's current health level | 0 - 100
             pet_hunger INT NOT NULL DEFAULT 10, -- pet's current hunger level | 0 - 100
             pet_mood INT NOT NULL DEFAULT 100, -- pet's current mood level | 0 - 100
+            hunger_last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- time pet was last fed 
+            mood_last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- time pet was last played with / petted
             creation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- time account was created [NOW() is only for SQL-queries of the table, not creating its initial instance]
         );                    
     """
@@ -89,13 +91,13 @@ setInitialUsersTable()
 def getPetDetails():
     try:
         user_name = request.args.get("user_name") # from url-path query params
-        cursor.execute("SELECT pet_health, pet_hunger, pet_mood from users WHERE user_name=%s", (user_name,)) 
+        cursor.execute("SELECT pet_health, pet_hunger, pet_mood, hunger_last_updated, mood_last_updated from users WHERE user_name=%s", (user_name,)) 
 
         # Unpack tuple of values
-        pet_health, pet_hunger, pet_mood = cursor.fetchone()
+        pet_health, pet_hunger, pet_mood, hunger_last_updated, mood_last_updated = cursor.fetchone()
 
         # '%s' parameterized query (psycopg2) to prevent SQL-string-injections attacks (i.e. sanitized via ` '/ ` escape before execution)
-        return jsonify({"petDetails": {"health": pet_health, "hunger": pet_hunger, "mood": pet_mood}, "message": "Fetched pet details!"}), 200
+        return jsonify({"petDetails": {"health": pet_health, "hunger": (pet_hunger, hunger_last_updated), "mood": (pet_mood, mood_last_updated)}, "message": "Fetched pet details!"}), 200
     
     except Exception as e: # Handle database errors
         return jsonify({"error": str(e)}), 500      
@@ -123,14 +125,13 @@ def getPetHealth():
 def getPetHunger():
     try:
         user_name = request.args.get("user_name") # from url-path query params
-        cursor.execute("SELECT pet_hunger from users WHERE user_name=%s", (user_name,)) 
+        cursor.execute("SELECT pet_hunger, hunger_last_updated from users WHERE user_name=%s", (user_name,)) 
 
         # Unpack tuple of values
-        pet_hunger = cursor.fetchone()[0]
-        print(pet_hunger)
+        pet_hunger, last_updated = cursor.fetchone()
 
         # '%s' parameterized query (psycopg2) to prevent SQL-string-injections attacks (i.e. sanitized via ` '/ ` escape before execution)
-        return jsonify({"hunger": pet_hunger, "message": "Fetched pet hunger!"}), 200
+        return jsonify({"hunger": (pet_hunger, last_updated), "message": "Fetched pet hunger!"}), 200
     
     except Exception as e: # Handle database errors
         return jsonify({"error": str(e)}), 500      
@@ -141,13 +142,13 @@ def getPetHunger():
 def getPetMood():
     try:
         user_name = request.args.get("user_name") # from url-path query params
-        cursor.execute("SELECT pet_mood from users WHERE user_name=%s", (user_name,)) 
+        cursor.execute("SELECT pet_mood, mood_last_updated from users WHERE user_name=%s", (user_name,)) 
 
         # Unpack tuple of values
-        pet_mood = cursor.fetchone()[0]
+        pet_mood, last_updated = cursor.fetchone()
 
         # '%s' parameterized query (psycopg2) to prevent SQL-string-injections attacks (i.e. sanitized via ` '/ ` escape before execution)
-        return jsonify({"mood": pet_mood, "message": "Fetched pet mood!"}), 200
+        return jsonify({"mood": (pet_mood, last_updated), "message": "Fetched pet mood!"}), 200
     
     except Exception as e: # Handle database errors
         return jsonify({"error": str(e)}), 500      
@@ -159,7 +160,6 @@ def updatePetHealth(user_name : str):
 
     request_header_data = request.get_json()
     new_health = request_header_data.get("newHealth")
-    print(new_health)
 
     try:
         cursor.execute("UPDATE users SET pet_health = %s WHERE user_name = %s", (new_health, user_name,))
@@ -178,10 +178,13 @@ def updatePetHunger(user_name : str):
 
     request_header_data = request.get_json()
     pet_hunger : int = request_header_data.get("newHunger")
+    current_time = datetime.now()
 
     try:
-        cursor.execute("UPDATE users SET pet_hunger = %s WHERE user_name = %s", (pet_hunger, user_name,))
+        cursor.execute("UPDATE users SET pet_hunger = %s, hunger_last_updated = %s WHERE user_name = %s", (pet_hunger, current_time, user_name,))
         conn.commit() # Commit to remote Supabase-Database-Git Repo :)
+
+        print(cursor)
 
         return jsonify({"message": f"User {user_name} pet hunger status updated to {pet_hunger}"}), 200
 
@@ -197,8 +200,10 @@ def updatePetMood(user_name : str):
     request_header_data = request.get_json()
     pet_mood : int = request_header_data.get("newMood")
 
+    current_time = datetime.now()
+
     try:
-        cursor.execute("UPDATE users SET pet_mood = %s WHERE user_name = %s", (pet_mood, user_name,))
+        cursor.execute("UPDATE users SET pet_mood = %s, mood_last_updated = %s WHERE user_name = %s", (pet_mood, current_time, user_name,))
         conn.commit() # Commit to remote Supabase-Database-Git Repo :)
 
         return jsonify({"message": f"User {user_name} pet mood status updated to {pet_mood}"}), 200
