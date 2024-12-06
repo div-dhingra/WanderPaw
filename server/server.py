@@ -7,6 +7,8 @@ import json # Module to read JSON objects, and convert them to usable JS-objects
 
 import random # Module to generate random values
 
+import datetime
+
 # Import Flask Class/Module/Library
 from flask import Flask, jsonify, request
 
@@ -59,7 +61,7 @@ CREATE_USERS_TABLE = (
             id SERIAL PRIMARY KEY, -- Unique user identifier for the table (hence SERIAL | unrelated to input)
             user_name TEXT NOT NULL UNIQUE, -- username
             pet_health INT NOT NULL DEFAULT 100, -- pet's current health level | 0 - 100
-            pet_hunger INT NOT NULL DEFAULT 0, -- pet's current hunger level | 0 - 100
+            pet_hunger INT NOT NULL DEFAULT 10, -- pet's current hunger level | 0 - 100
             pet_mood INT NOT NULL DEFAULT 100, -- pet's current mood level | 0 - 100
             creation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- time account was created [NOW() is only for SQL-queries of the table, not creating its initial instance]
         );                    
@@ -96,15 +98,33 @@ def getPetDetails():
         return jsonify({"petDetails": {"health": pet_health, "hunger": pet_hunger, "mood": pet_mood}, "message": "Fetched pet details!"}), 200
     
     except Exception as e: # Handle database errors
-        return jsonify({"error": str(e)}), 500       
+        return jsonify({"error": str(e)}), 500      
+ 
+# Get UP-TO-DATE health-attribute of pet, SPECIFICALLY
+# .../pet-health?user_name=andrews_covalent_bond" [no request-body for get-requests] (url-query params instead)
+@app.get("/api/users/pet-health")
+def getPetHealth():
+    try:
+        user_name = request.args.get("user_name") # from url-path query params
+        cursor.execute("SELECT pet_health from users WHERE user_name=%s", (user_name,)) 
 
+        # Unpack tuple of values
+        pet_health = cursor.fetchone()[0]
+
+        # '%s' parameterized query (psycopg2) to prevent SQL-string-injections attacks (i.e. sanitized via ` '/ ` escape before execution)
+        return jsonify({"health": pet_health, "message": "Fetched pet health!"}), 200
+    
+    except Exception as e: # Handle database errors
+        return jsonify({"error": str(e)}), 500      
+        
 # Update health of pet (from playing with it / feeding it)
 # Health = f(Hunger, Mood)
 @app.patch("/api/users/<user_name>/update-pet-health") # user_id is pulled from the query-param-path, hence its in the function-arg directly
 def updatePetHealth(user_name : str):
 
     request_header_data = request.get_json()
-    new_health : int = request_header_data.get("newHealth")
+    new_health = request_header_data.get("newHealth")
+    print(new_health)
 
     try:
         cursor.execute("UPDATE users SET pet_health = %s WHERE user_name = %s", (new_health, user_name,))
@@ -152,3 +172,98 @@ def updatePetMood(user_name : str):
         conn.rollback() # Undo the committed SQL-changes for this CURRENT SET OF COMMITS / Transaction SESSION
         return jsonify({"error": str(e)}), 500
 
+# TODO: Add new users? Create login page in frontend and use bcrypt for hashing passwords.
+# Else, dummy user for now is 'andrews_covalent_bond'
+@app.post("/api/users")
+def processUser(): # Log-in or Create New User-account, depending on if it already exists.
+   
+    request_header_data = request.get_json()
+    
+    # Get all MANUALLY-required data-fields (columns) to create the user in my table
+    # backend for intercepted, modified requests)
+    user_name =  request_header_data.get("user_name")
+    # password = request_header_data.get("password") # For security, store hash of password (not password explicitly) in my database
+    # or not password 
+
+    # id_pattern = r'^\d{4}$' # 9 digits == librarianID
+    # if not re.match(id_pattern, user_id):
+
+    # No user name provided
+    if not user_name:
+        return jsonify({'error': 'Please provide a username'}), 400
+
+    try: 
+
+        # Check if this user already exists — if so, return 'Welcome Back' (account already exists),
+        # instead of duplicating the entry in the table
+        cursor.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
+        user_exists = cursor.fetchone() 
+
+        # * FIRST: Check If this user already exists (to avoid unnecessary computations if the user doesn't) [i.e., as below]
+        if user_exists:
+
+            cursor.execute("SELECT pet_health, pet_hunger, pet_mood from users WHERE user_name=%s", (user_name,)) 
+            pet_health, pet_hunger, pet_mood = cursor.fetchall()
+            return jsonify({'message': 'Welcome Back!', 'user_name': user_name, "health": pet_health, "hunger": pet_hunger, "mood": pet_mood}), 201  # Log-in Success 
+
+            # # * Get/Fetch password-hash (password CIPHERTEXT w/ un-enc salt sprinkled on top)
+            # # * for this existing user_account
+            # cursor.execute("SELECT password_hash FROM users WHERE user_id = %s", (user_id,))
+            # stored_password_hash = cursor.fetchone()[0] # Tuple of 1 element/column_field | * === tuple of all column_fields for this entry
+            # stored_password_hash = bytes(stored_password_hash) # Convert from memory-view format back to bytes-format :)
+
+            # correct_password = (stored_password_hash == bcrypt.hashpw(password.encode('utf-8'), stored_password_hash))
+            # if correct_password:
+            #     is_active_account = user_exists[5] # Get Active Status, i.e. 5th element in returned tuple of row-entry values (i.e. column_field values)
+            #     if not is_active_account:
+            #         num_books_overdue = len(user_exists[6])
+            #         if num_books_overdue == 0: # New account
+            #             return jsonify({'error': 'A librarian will activate your newly created account shortly.'}), 403
+                    
+            #         return jsonify({'error': """You're account has been deactivated for >3 overdue books. Please return them to access your account."""}), 403
+                
+            #     cursor.execute("SELECT * FROM user_book_checkouts WHERE user_id = %s", (user_id,))
+            #     book_checkouts = [book_isbn_id for x, book_isbn_id, z in cursor.fetchall()]
+            #     return jsonify({'message': 'Welcome Back!', 'user_id': user_id, 'is_active_account': is_active_account, 'book_checkouts': book_checkouts}), 201  # Log-in Success 
+            # else:
+            #     return jsonify({'error': 'Invalid Password. Please Try Again!'}), 401  # Log-in Attempt #1 | Try Again
+
+        else:
+            cursor.execute("SELECT * FROM users WHERE user_name = %s", (user_name,))
+            is_duplicate_user_name = cursor.fetchone()
+            if is_duplicate_user_name:
+                return jsonify({'error': 'Username is taken! Please enter a new username.'}), 409 # Error
+        
+        # Random salt to prevent rainbow-table attacks,
+        # # which map/backtrack common passwords from their STATIC encrypted-text (cipher-text)
+        # random_salt = bcrypt.gensalt()
+        
+        # # Generate cipher-text, w/ unique salt sprinkled on top for randomness...
+        # password_hash = bcrypt.hashpw(password.encode('utf-8'), random_salt)
+
+        # Insert new-user entry into my database
+        # -- non-serial, non-default values are explicitly inserted
+        # cursor.execute(
+        #     """
+        #         INSERT INTO users (role_id, user_id, user_name, password_hash, is_active_account, books_overdue, string_password_hash)
+        #         VALUES ( 
+        #             %s, %s, %s, %s, %s, %s, %s
+        #         );
+        #     """,
+        #     (role_id, user_id, user_name, password_hash, 'TRUE' if role_id == 1 else 'FALSE', [], password_hash)       
+        # )
+
+        # Create NEW, UNIQUE user – all other attributes are defaultly initialized (no need to manually specify)
+        cursor.execute( 
+            """
+                INSERT into users (user_name)
+                VALUES (%s);
+            """,
+            (user_name,)
+        )
+        conn.commit()
+
+        return jsonify({'message': 'Welcome Back!', 'user_name': user_name, "health": 100, "hunger": 0, "mood": 10}), 201  # Sign-Up-Creation-Success Success 
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
