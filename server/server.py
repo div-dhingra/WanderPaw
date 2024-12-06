@@ -133,7 +133,24 @@ def getPetHunger():
         return jsonify({"hunger": pet_hunger, "message": "Fetched pet hunger!"}), 200
     
     except Exception as e: # Handle database errors
-        return jsonify({"error": str(e)}), 500        
+        return jsonify({"error": str(e)}), 500      
+
+# Get UP-TO-DATE mood-attribute of pet, SPECIFICALLY
+# .../pet-mood?user_name=andrews_covalent_bond" [no request-body for get-requests] (url-query params instead)
+@app.get("/api/users/pet-mood")
+def getPetMood():
+    try:
+        user_name = request.args.get("user_name") # from url-path query params
+        cursor.execute("SELECT pet_mood from users WHERE user_name=%s", (user_name,)) 
+
+        # Unpack tuple of values
+        pet_mood = cursor.fetchone()[0]
+
+        # '%s' parameterized query (psycopg2) to prevent SQL-string-injections attacks (i.e. sanitized via ` '/ ` escape before execution)
+        return jsonify({"mood": pet_mood, "message": "Fetched pet mood!"}), 200
+    
+    except Exception as e: # Handle database errors
+        return jsonify({"error": str(e)}), 500      
         
 # Update health of pet (from playing with it / feeding it)
 # Health = f(Hunger, Mood)
