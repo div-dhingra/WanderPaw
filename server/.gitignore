@@ -1,0 +1,4 @@
+# Added when I instanitate git in my project folder(s) anyway
+.venv
+.dbenv 
+.flaskenv
