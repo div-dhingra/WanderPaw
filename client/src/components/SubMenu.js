@@ -18,11 +18,11 @@ const SubMenu = ({ activeMenu, onOptionClick, onClose, position, status }) => {
   // Determines progress bar color based on status type
   const getColor = (key) => {
     switch (key) {
-      case 'Health':
+      case 'health':
         return 'green';
-      case 'Hunger':
+      case 'hunger':
         return 'orange';
-      case 'Mood':
+      case 'mood':
         return 'blue';
       default:
         return 'gray';
@@ -72,7 +72,7 @@ const SubMenu = ({ activeMenu, onOptionClick, onClose, position, status }) => {
                 fontSize: '14px',
               }}
             >
-              {key}: {value}%
+              {key}: {key === "health" ? value : value[0]}%
             </div>
             <div
               style={{
@@ -86,7 +86,7 @@ const SubMenu = ({ activeMenu, onOptionClick, onClose, position, status }) => {
               <div
                 style={{
                   height: '100%',
-                  width: `${value}%`,
+                  width: `${key === "health" ? value : value[0]}%`,
                   background: getColor(key), // Set progress bar color
                   borderRadius: '5px',
                 }}
