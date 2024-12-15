@@ -73,7 +73,7 @@ setInitialUsersTable()
 # Get details of this user's pet (health, hunger, mood)
 # NOTE: Get-requests don't allow a request-body (RESTful principles): Use url-query-params 
 # * (?user_name=andrews_covalent_bond")
-@app.get("/api/users")
+@app.get("/api/users/pet-details")
 def getPetDetails():
     try:
         user_name = request.args.get("user_name") # from url-path query params
