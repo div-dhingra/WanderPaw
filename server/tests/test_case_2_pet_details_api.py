@@ -1,5 +1,3 @@
-# API-Endpoint Test #1: 
-
 # Import flask app that all apis are bundled into for test
 from server import app
 from datetime import datetime
