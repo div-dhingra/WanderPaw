@@ -90,10 +90,10 @@ const Login = ({ onClose, onLoginSuccess }) => {
   };
 
   const inputStyle = {
-    width: '100%',
+    width: '93%',
     padding: '10px',
-    marginBottom: '15px',
-    border: '1px solid #ccc',
+    marginBottom: '20px',
+    border: '2px solid #ccc',
     borderRadius: '5px',
     fontSize: '16px',
   };
