@@ -3,6 +3,7 @@ import Pet from './components/Pet';
 import MenuBar from './components/MenuBar';
 import SubMenu from './components/SubMenu';
 import PopupWindow from './components/PopupWindow';
+import LoginButton from './components/Loginbutton';
 
 const App = () => {
   const useDummyData = true; // use dummydata or not
@@ -370,6 +371,14 @@ const App = () => {
       default:
         console.log(`Unknown option: ${option}`);
     }
+    const App = () => {
+      return (
+          <div>
+              {/* 登入按鈕 */}
+              <LoginButton />
+          </div>
+      );
+  };
 
   };
 

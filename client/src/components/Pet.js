@@ -7,42 +7,32 @@ import move from '../assets/animation/doro-move.gif';
 import run from '../assets/animation/doro-run.gif';
 import sleep from '../assets/animation/doro-sleep.gif';
 import idle from '../assets/animation/doro-idle.gif';
+import loginIcon from '../assets/icons/login-icon.png'; // 登入圖標
+import Login from './Login'; // 引入 Login 組件
 
-/**
- * Pet Component
- * Displays the pet with animations based on its current action.
- */
 const Pet = ({ action, position, onPositionChange }) => {
   const [currentAction, setCurrentAction] = useState(action);
+  const [isHovered, setIsHovered] = useState(false); // 控制滑鼠移入狀態
+  const [showLogin, setShowLogin] = useState(false); // 控制登入窗口顯示
 
-  // Map actions to corresponding GIFs
   const getPetAnimation = () => {
     switch (currentAction) {
-      case 'bike':
-        return bike;
-      case 'board':
-        return board;
-      case 'dorodash':
-        return dorodash;
-      case 'hunger':
-        return hunger;
-      case 'move':
-        return move;
-      case 'run':
-        return run;
-      case 'sleep':
-        return sleep;
-      case 'idle':
-      default:
-        return idle; // Default to idle
+      case 'bike': return bike;
+      case 'board': return board;
+      case 'dorodash': return dorodash;
+      case 'hunger': return hunger;
+      case 'move': return move;
+      case 'run': return run;
+      case 'sleep': return sleep;
+      case 'idle': 
+      default: return idle;
     }
   };
 
-  // Randomly move the pet on the screen
   const movePetRandomly = () => {
     if (currentAction !== 'idle' && currentAction !== 'sleep' && currentAction !== 'hunger') {
-      const offsetX = Math.random() * 300 - 150; // Random offset between -150 and 150
-      const offsetY = Math.random() * 300 - 150; // Random offset between -150 and 150
+      const offsetX = Math.random() * 300 - 150;
+      const offsetY = Math.random() * 300 - 150;
 
       const newX = Math.max(0, Math.min(window.innerWidth - 200, position.x + offsetX));
       const newY = Math.max(0, Math.min(window.innerHeight - 200, position.y + offsetY));
@@ -51,16 +41,13 @@ const Pet = ({ action, position, onPositionChange }) => {
     }
   };
 
-  // Randomly switch actions from a pool
-  const randomizeAction = () => {
-    const actions = ['bike', 'board', 'dorodash', 'hunger', 'move', 'run', 'idle', 'sleep'];
-    const newAction = actions[Math.floor(Math.random() * actions.length)];
-    setCurrentAction(newAction);
-  };
-
   useEffect(() => {
-    const actionInterval = setInterval(randomizeAction, 5000); // Switch action every 5 seconds
-    const moveInterval = setInterval(movePetRandomly, 1000); // Move pet every 1 seconds
+    const actionInterval = setInterval(() => {
+      const actions = ['bike', 'board', 'dorodash', 'hunger', 'move', 'run', 'idle', 'sleep'];
+      setCurrentAction(actions[Math.floor(Math.random() * actions.length)]);
+    }, 5000);
+
+    const moveInterval = setInterval(movePetRandomly, 1000);
 
     return () => {
       clearInterval(actionInterval);
@@ -78,7 +65,10 @@ const Pet = ({ action, position, onPositionChange }) => {
         width: '200px',
         height: '200px',
       }}
+      onMouseEnter={() => setIsHovered(true)} // 滑鼠進入
+      onMouseLeave={() => setIsHovered(false)} // 滑鼠離開
     >
+      {/* 寵物動畫 */}
       <img
         src={getPetAnimation()}
         alt="Pet Animation"
@@ -88,6 +78,27 @@ const Pet = ({ action, position, onPositionChange }) => {
           objectFit: 'contain',
         }}
       />
+      {/* 登入圖標 */}
+      <img
+        src={loginIcon}
+        alt="Login Icon"
+        style={{
+          position: 'absolute',
+          top: '5px',
+          right: '5px',
+          width: '30px',
+          height: '30px',
+          cursor: 'pointer',
+          opacity: isHovered ? 1 : 0, // 滑鼠進入才顯示，移開完全隱藏
+          transition: 'opacity 0.3s', // 增加平滑過渡效果
+          pointerEvents: isHovered ? 'auto' : 'none', // 隱藏時禁用點擊
+        }}
+        onClick={() => setShowLogin(true)} // 點擊顯示登入窗口
+      />
+      {/* 登入窗口 */}
+      {showLogin && (
+        <Login onClose={() => setShowLogin(false)} /> // 點擊關閉按鈕時隱藏
+      )}
     </div>
   );
 };

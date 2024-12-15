@@ -1,92 +1,85 @@
 import React, { useState } from 'react';
 
 const Login = ({ onClose }) => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+  const [currentPage, setCurrentPage] = useState('login'); // 控制當前顯示的頁面
 
-    const handleLogin = () => {
-        if (username === 'admin' && password === '12345') {
-            alert(`Login successful! Welcome ${username}`);
-            onClose();
-        } else {
-            alert('Invalid username or password.');
-        }
-    };
-
-    return (
-        <div style={styles.overlay}>
-            <div style={styles.modal}>
-                <h2>Login</h2>
-                <input
-                    style={styles.input}
-                    type="text"
-                    placeholder="Username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                />
-                <input
-                    style={styles.input}
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-                <button style={styles.button} onClick={handleLogin}>
-                    Login
-                </button>
-                <button style={styles.closeButton} onClick={onClose}>
-                    Close
-                </button>
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'login':
+        return (
+          <div>
+            <h2>Login</h2>
+            <input type="text" placeholder="Username" />
+            <input type="password" placeholder="Password" />
+            <button onClick={() => alert('Logged in!')}>Login</button>
+            <div style={{ marginTop: '10px' }}>
+              <button onClick={() => setCurrentPage('register')}>Register</button>
+              <button onClick={() => setCurrentPage('forgotPassword')}>Forgot Password</button>
             </div>
-        </div>
-    );
-};
+          </div>
+        );
+      case 'register':
+        return (
+          <div>
+            <h2>Register</h2>
+            <input type="text" placeholder="Username" />
+            <input type="email" placeholder="Email" />
+            <input type="password" placeholder="Password" />
+            <input type="password" placeholder="Confirm Password" />
+            <button onClick={() => alert('Registered!')}>Register</button>
+            <div style={{ marginTop: '10px' }}>
+              <button onClick={() => setCurrentPage('login')}>Back to Login</button>
+            </div>
+          </div>
+        );
+      case 'forgotPassword':
+        return (
+          <div>
+            <h2>Forgot Password</h2>
+            <input type="email" placeholder="Enter your email" />
+            <button onClick={() => alert('Password reset link sent!')}>Send Reset Link</button>
+            <div style={{ marginTop: '10px' }}>
+              <button onClick={() => setCurrentPage('login')}>Back to Login</button>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
-const styles = {
-    overlay: {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1000,
-    },
-    modal: {
-        backgroundColor: '#fff',
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        background: 'white',
         padding: '20px',
         borderRadius: '10px',
-        textAlign: 'center',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
         width: '300px',
-    },
-    input: {
-        width: '90%',
-        padding: '10px',
-        margin: '10px 0',
-        fontSize: '16px',
-    },
-    button: {
-        padding: '10px 20px',
-        fontSize: '16px',
-        backgroundColor: '#4CAF50',
-        color: '#fff',
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'pointer',
-        marginRight: '10px',
-    },
-    closeButton: {
-        padding: '10px 20px',
-        fontSize: '16px',
-        backgroundColor: '#f44336',
-        color: '#fff',
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'pointer',
-    },
+        textAlign: 'center',
+      }}
+    >
+      {renderPage()}
+      <button
+        onClick={onClose}
+        style={{
+          marginTop: '15px',
+          backgroundColor: '#007bff',
+          color: 'white',
+          padding: '8px 16px',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: 'pointer',
+        }}
+      >
+        Close
+      </button>
+    </div>
+  );
 };
 
 export default Login;
