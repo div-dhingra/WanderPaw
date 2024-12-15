@@ -4,6 +4,10 @@ import MenuBar from './components/MenuBar';
 import SubMenu from './components/SubMenu';
 import PopupWindow from './components/PopupWindow';
 import LoginButton from './components/Loginbutton';
+import Profile from './components/Profile';  
+import Login from './components/Login';
+import './components/Login.css';
+
 
 const App = () => {
   const useDummyData = true; // use dummydata or not
@@ -13,6 +17,12 @@ const App = () => {
     x: window.innerWidth / 2 - 50,
     y: window.innerHeight / 2 - 50,
   });
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // login or not
+  const [showPopup, setShowPopup] = useState(false);  // 
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+  };
 
   const [subMenuPosition, setSubMenuPosition] = useState({ x: 0, y: 0 });
   const [userName, setUserName] = useState("andrews_covalent_bond")
@@ -374,11 +384,23 @@ const App = () => {
     const App = () => {
       return (
           <div>
-              {/* 登入按鈕 */}
+              {/* LoginButton */}
               <LoginButton />
           </div>
       );
   };
+
+  
+
+  const user = {
+    avatar: 'https://via.placeholder.com/100',
+    username: 'Dorothy',
+    email: 'dorothy@example.com',
+    joinDate: '2024-12-14',
+  };
+
+  const handleClosePopup = () => setShowPopup(false);
+
 
   };
 
@@ -444,6 +466,10 @@ const App = () => {
 
       {/* Popup Window */}
       <PopupWindow title="Action" content={popupContent} onClose={closePopup} />
+          {/* Login icon */}
+          <LoginButton onClick={() => setShowPopup(true)} />
+
+        
     </div>
   );
 };
