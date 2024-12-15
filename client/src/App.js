@@ -39,7 +39,7 @@ const App = () => {
   const [isMenuVisible, setIsMenuVisible] = useState(false); // Track whether the menu is visible
   const [isSubMenuHovered, setIsSubMenuHovered] = useState(false); // Track whether the submenu is being hovered
   const [notificationMessage, setNotificationMessage] = useState(''); // 
-  const [isTestMode, setIsTestMode] = useState(true); // 
+  const [isIdleMode, setIsIdleMode] = useState(true); // 
   const [hungerMoodSuperscore, setHungerMoodSuperscore] = useState(0);
   // health = f(hunger, mood)
 
@@ -318,7 +318,7 @@ const App = () => {
   };
 
   const updatePetPosition = (newPosition) => {
-    if (!isTestMode) {
+    if (!isIdleMode) {
       setPetPosition(newPosition);
     }
   };
@@ -359,15 +359,15 @@ const App = () => {
         petOrPlayWithPet();
         break;
 
-      case 'Test Mode':
-        if (isTestMode) {
-          setIsTestMode(false);
-          setNotificationMessage('Pet is now out of Test Mode, movement resumed.');
-          // actionMessage = 'Pet is now out of Test Mode, movement resumed.';
+      case 'Idle Mode':
+        if (isIdleMode) {
+          setIsIdleMode(false);
+          setNotificationMessage('Pet is now out of Idle Mode, movement resumed.');
+          // actionMessage = 'Pet is now out of Idle Mode, movement resumed.';
         } else {
-          setIsTestMode(true);
-          // actionMessage = 'Pet is now in Test Mode, movement stopped.';
-          setNotificationMessage('Pet is now in Test Mode, movement stopped.');
+          setIsIdleMode(true);
+          // actionMessage = 'Pet is now in Idle Mode, movement stopped.';
+          setNotificationMessage('Pet is now in Idle Mode, movement stopped.');
         }
         break;
       case 'Reset Status':

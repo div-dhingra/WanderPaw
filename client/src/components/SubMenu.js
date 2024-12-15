@@ -11,7 +11,7 @@ const SubMenu = ({ activeMenu, onOptionClick, onClose, position, status }) => {
   // Menu options for Interact and Settings menus
  const options = {
   Interact: ['Feed', 'Play', 'Pet'], 
-  Settings: ['Sound', 'Background', 'Test Mode', 'Reset Status'],
+  Settings: ['Sound', 'Background', 'Idle Mode', 'Reset Status'],
 };
 
 
