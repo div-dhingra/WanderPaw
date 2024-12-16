@@ -214,12 +214,8 @@ def userSignUp(): # Log-in or Create New User-account, depending on if it alread
     # Get all MANUALLY-required data-fields (columns) to create the user in my table
     # backend for intercepted, modified requests)
     user_name =  request_header_data.get("user_name")
-    password = request_header_data.get("password")
-    # password = request_header_data.get("password") # For security, store hash of password (not password explicitly) in my database
+    password = request_header_data.get("password") # For security, store hash of password (not password explicitly) in my database
     # or not password 
-
-    # id_pattern = r'^\d{4}$' # 9 digits == librarianID
-    # if not re.match(id_pattern, user_id):
 
     # No user name provided
     if not user_name:
@@ -281,7 +277,7 @@ def userSignUp(): # Log-in or Create New User-account, depending on if it alread
         return jsonify({'error': f'{user_name} {password}'}), 500
 
 # User Log-in endpoint (for pre-existing accounts ONLY)
-@app.post("api/auth/login")
+@app.post("/api/auth/login")
 def userLogIn():
     request_header_data = request.get_json()
     
