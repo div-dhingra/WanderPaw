@@ -281,7 +281,7 @@ def userSignUp(): # Log-in or Create New User-account, depending on if it alread
         return jsonify({'error': f'{user_name} {password}'}), 500
 
 # User Log-in endpoint (for pre-existing accounts ONLY)
-@app.post("/auth/login")
+@app.post("api/auth/login")
 def userLogIn():
     request_header_data = request.get_json()
     
