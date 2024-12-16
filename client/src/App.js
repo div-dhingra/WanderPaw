@@ -206,9 +206,9 @@ const App = () => {
 
   // Each time pet is fed, update hunger (-10 for lower meaning less hungry (i.e. better | less is more))
   // Else, if pet hasn't been fed in 30s, increase hunger levels
-  const updateHunger = async(fed) => {
+  const updateHunger = async(fed, specificHunger) => {
 
-    const newHunger = fed ? Math.max((status.hunger[0]) - 10, 0) : Math.min((status.hunger[0]) + 10, 100);
+    const newHunger = ( specificHunger === undefined ? (fed ? Math.max((status.hunger[0]) - 10, 0) : Math.min((status.hunger[0]) + 10, 100)) : specificHunger );
 
     const requestBody = {
       method: 'PATCH',
@@ -240,60 +240,120 @@ const App = () => {
 
   }
 
-    // Decrease mood every 'x' seconds pet is not played with (i.e. interacted with)
-    // ! Mood = f(play)
-    const updateMood = async(playedWith) => {
+  // Decrease mood every 'x' seconds pet is not played with (i.e. interacted with)
+  // ! Mood = f(play)
+  const updateMood = async(playedWith, specificMood) => {
 
-      const newMood = playedWith ? Math.min((status.mood[0]) + 10, 100) : Math.max((status.mood[0]) - 10, 0);
-  
-      const requestBody = {
-        method: 'PATCH',
-        headers: {
-        'Content-Type': 'application/json',
-        }, 
-        body: JSON.stringify({"newMood": newMood})
-        // Either interacted with (click play | increase mood levels), or pet hasn't been played with in 30s -> decrease mood levels (from 100 to '-10', bounded towards 0)
-      }
-  
-      try {
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/${userName}/update-pet-mood`, requestBody);
-        console.log(response)
-        const res = await response.json();
-        // If not 200-response-code
-        if (!response.ok) { 
-            throw new Error(`${response.status}`)
-        }
-        
-        // Successfully updated pet-mood (via petting it or playing with it)
-        console.log(res.message);
-        setNotificationMessage(`Mood ${playedWith ? "increased" : "decreased"} to ${(newMood)}%`);
-  
-      } catch(error) {
-        console.error(error)
-      }   
-
+    const newMood = ( specificMood === undefined ? (playedWith ? Math.min((status.mood[0]) + 10, 100) : Math.max((status.mood[0]) - 10, 0)) : specificMood );
+    
+    const requestBody = {
+      method: 'PATCH',
+      headers: {
+      'Content-Type': 'application/json',
+      }, 
+      body: JSON.stringify({"newMood": newMood})
+      // Either interacted with (click play | increase mood levels), or pet hasn't been played with in 30s -> decrease mood levels (from 100 to '-10', bounded towards 0)
     }
 
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/${userName}/update-pet-mood`, requestBody);
+      console.log(response)
+      const res = await response.json();
+      // If not 200-response-code
+      if (!response.ok) { 
+          throw new Error(`${response.status}`)
+      }
+      
+      // Successfully updated pet-mood (via petting it or playing with it)
+      console.log(res.message);
+      setNotificationMessage(`Mood ${playedWith ? "increased" : "decreased"} to ${(newMood)}%`);
+
+    } catch(error) {
+      console.error(error)
+    }   
+
+  }
+     
+  // ! Update pet-attributes periodically based on user-interacton / lack-thereof
+  useEffect(() => {
+    // Increase Hunger every 2 minutes (120s) that pet is not fed | recheck this every second (1000ms intervals)
+    const hungerIntervalID = setInterval( async() => {
+
+        // Skip first iteration (status === undefined)
+        if (status.hunger !== undefined) {
+          
+          const timeDifferenceSeconds = (new Date() - (status.hunger)[1]) / 1000;
+
+          // Increase hunger | Update health, displayed status-state accordingly
+          if (timeDifferenceSeconds > 120) {
+            await updateHunger(false);
+            await updateHealth();
+            const newStatus = await getPetStatus(); // Getter [return desired value]
+            setStatus(newStatus); // Setter [update/modify/MUTATE from desired value]
+          }
+        }
+
+    }, 1000);
+
+    // Decrease Mood every 1 minute (60s) that pet is not interacted with (petted OR played with)
+    const moodIntervalID = setInterval( async() => {
+
+        // Skip first iteration (status === undefined)
+        if (status.mood !== undefined) {
+          console.log(status.mood);
+          const timeDifferenceSeconds = (new Date() - (status.mood)[1]) / 1000;
+          console.log((status.mood)[1]);
+
+          // Decrease mood | Update health, displayed status-state accordingly
+          if (timeDifferenceSeconds > 60) {
+            
+            console.log(status.mood[1]);
+            await updateMood(false);
+            await updateHealth();
+            const newStatus = await getPetStatus(); // Getter [return desired value]
+            setStatus(newStatus); // Setter [update/modify/MUTATE from desired value]
+          } 
+        } 
+
+    }, 1000);
+    
+    // Reset pet attributes to optimal (100, 0, 100) every 60 minutes (~ to user-session | else pet deteriorates indefinitely 
+    // while user is logged in)
+    const resetAttributesIntervalID = setInterval( async() => {
+
+      await updateMood(true, 100);
+      await updateHunger(true, 0);
+      await updateHealth();
+      const newStatus = await getPetStatus(); // Getter [return desired value]
+      setStatus(newStatus); // Setter [update/modify/MUTATE from desired value]
+
+    }, (60 * 60 * 10000))
+
+    // Clean-up function to prevent interval stacking
+    return () => {clearInterval(hungerIntervalID); clearInterval(moodIntervalID); clearInterval(resetAttributesIntervalID)};
+  
+  }, [])
 
   // ! Set initial status of pet (i.e. values in database for 'health, hunger, mood')
   useEffect(() => {
 
-    // Skip initial render
     if (userName !== "") {
 
-      // Multiple CHAINED (i.e. Dependent) Async requests / APIs called, so call together in new async function :)
-      const setInitialDetails = async () => {
+        // Multiple CHAINED (i.e. Dependent) Async requests / APIs called, so call together in new async function :)
+        const setInitialDetails = async () => {
 
-        // Set initial pet-status 
-        const newStatus = await getPetStatus(); // Getter [return desired value]
-        setStatus(newStatus); // Setter [modify from desired value]
-      }
+          // Set initial pet-status 
+          const newStatus = await getPetStatus(); // Getter [return desired value]
+          setStatus(newStatus); // Setter [update/modify/MUTATE from desired value]
+        }
 
-      // Call function :)
-      setInitialDetails();
+        // Call function :)
+        setInitialDetails();
+
     }
 
   }, [isLoggedIn])
+
 
   // Display notification message after interacting with pet (feed, pet/play)
   useEffect(() => {
