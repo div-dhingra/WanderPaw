@@ -271,7 +271,7 @@ def userSignUp(): # Log-in or Create New User-account, depending on if it alread
         conn.commit()
 
         # Don't return password_hash (sensitive info)
-        return jsonify({'message': 'Congratulations! You\'ve succesfully made an account!', 'user_name': user_name, "health": 100, "hunger": 0, "mood": 10}), 201  # Sign-Up-Creation-Success  
+        return jsonify({'message': 'Congratulations! You\'ve succesfully made an account!', 'user_name': user_name, "health": 100, "hunger": 0, "mood": 100}), 201  # Sign-Up-Creation-Success  
 
     except Exception as e:
         return jsonify({'error': f'{user_name} {password}'}), 500
