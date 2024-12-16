@@ -25,7 +25,7 @@ const App = () => {
   };
 
   const [subMenuPosition, setSubMenuPosition] = useState({ x: 0, y: 0 });
-  const [userName, setUserName] = useState("andrews_covalent_bond")
+  const [userName, setUserName] = useState("")
   const [status, setStatus] = useState({});
   // ! status = {
   // !            health : number,
@@ -44,6 +44,7 @@ const App = () => {
   // health = f(hunger, mood)
 
   const getPetStatus = async() => {
+
     const requestBody = {
       method: 'GET',
       headers: {
@@ -52,7 +53,7 @@ const App = () => {
     }
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users?user_name=${userName}`, requestBody);
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/pet-details?user_name=${userName}`, requestBody);
       console.log(response)
       const res = await response.json();
       // If not 200-response-code
@@ -277,18 +278,22 @@ const App = () => {
   // ! Set initial status of pet (i.e. values in database for 'health, hunger, mood')
   useEffect(() => {
 
-    // Multiple CHAINED (i.e. Dependent) Async requests / APIs called, so call together in new async function :)
-    const setInitialDetails = async () => {
+    // Skip initial render
+    if (userName !== "") {
 
-      // Set initial pet-status 
-      const newStatus = await getPetStatus(); // Getter [return desired value]
-      setStatus(newStatus); // Setter [modify from desired value]
+      // Multiple CHAINED (i.e. Dependent) Async requests / APIs called, so call together in new async function :)
+      const setInitialDetails = async () => {
+
+        // Set initial pet-status 
+        const newStatus = await getPetStatus(); // Getter [return desired value]
+        setStatus(newStatus); // Setter [modify from desired value]
+      }
+
+      // Call function :)
+      setInitialDetails();
     }
 
-    // Call function :)
-    setInitialDetails();
-
-  }, [])
+  }, [isLoggedIn])
 
   // Display notification message after interacting with pet (feed, pet/play)
   useEffect(() => {
@@ -381,96 +386,77 @@ const App = () => {
       default:
         console.log(`Unknown option: ${option}`);
     }
-    const App = () => {
-      return (
-          <div>
-              {/* LoginButton */}
-              <LoginButton />
-          </div>
-      );
   };
 
-  
-
-  const user = {
-    avatar: 'https://via.placeholder.com/100',
-    username: 'Dorothy',
-    email: 'dorothy@example.com',
-    joinDate: '2024-12-14',
-  };
-
-  const handleClosePopup = () => setShowPopup(false);
-
-
-  };
+  useEffect(() => {
+    console.log(userName);
+  }, [userName]);
 
   return (
-    <div>
-      <div
-        onMouseEnter={() => setIsMenuVisible(true)} // Show menu when mouse enters pet area
-        onMouseLeave={() => {
-          if (!isSubMenuHovered) {
-            setIsMenuVisible(false); // Hide menu only if submenu is not being hovered
+
+    !isLoggedIn ? <Login setIsLoggedIn={setIsLoggedIn} username={userName} setUsername={setUserName}/> : (
+      <div>
+        <div
+          onMouseEnter={() => setIsMenuVisible(true)} // Show menu when mouse enters pet area
+          onMouseLeave={() => {
+            if (!isSubMenuHovered) {
+              setIsMenuVisible(false); // Hide menu only if submenu is not being hovered
+            }
+          }}
+          style={{ position: 'relative', display: 'inline-block' }}
+        >
+          {/* Pet Component */}
+          <Pet position={petPosition} onPositionChange={updatePetPosition} action={petAction} />
+
+          {/* Menu Bar - only visible when mouse is over the pet */}
+          {isMenuVisible && (
+            <MenuBar
+              petPosition={petPosition}
+              onMenuClick={handleMenuClick}
+              onSubMenuPositionChange={setSubMenuPosition}
+            />
+          )}
+
+          {/* Notification for interactions */}
+          { notificationMessage !== '' && (
+                <div
+                style={{
+                  position: 'absolute',
+                  top: petPosition.y - 70, // 
+                  left: petPosition.x,
+                  transform: 'translate(-50%, 0)',
+                  background: 'rgba(0, 0, 0, 0.75)', // 
+                  color: '#fff', // white
+                  padding: '10px 20px',
+                  boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)',
+                  borderRadius: '8px',
+                  zIndex: 1000,
+                  fontSize: '14px',
+                  textAlign: 'center',
+                  width: 'max-content', // 
+                }}
+              >
+                {notificationMessage}
+              </div>
+            )
           }
-        }}
-        style={{ position: 'relative', display: 'inline-block' }}
-      >
-        {/* Pet Component */}
-        <Pet position={petPosition} onPositionChange={updatePetPosition} action={petAction} />
+        </div>
 
-        {/* Menu Bar - only visible when mouse is over the pet */}
-        {isMenuVisible && (
-          <MenuBar
-            petPosition={petPosition}
-            onMenuClick={handleMenuClick}
-            onSubMenuPositionChange={setSubMenuPosition}
-          />
-        )}
+        {/* Sub Menu */}
+        {/* key === "health" ? value : value[0] | status = {health : number, hunger : [number, time()], mood: [number, time()]} */}
+        <SubMenu
+          activeMenu={activeMenu}
+          position={{ x: petPosition.x + 10, y: petPosition.y + 170 }} // submenu position
+          status={status}
+          onOptionClick={handleOptionClick}
+          onClose={handleMenuClose}
+          onMouseEnter={() => setIsSubMenuHovered(true)} // Mark submenu as hovered
+          onMouseLeave={() => setIsSubMenuHovered(false)} // Mark submenu as not hovered
+        />
 
-        {/* Notification for interactions */}
-        { notificationMessage !== '' && (
-              <div
-              style={{
-                position: 'absolute',
-                top: petPosition.y - 70, // 
-                left: petPosition.x,
-                transform: 'translate(-50%, 0)',
-                background: 'rgba(0, 0, 0, 0.75)', // 
-                color: '#fff', // white
-                padding: '10px 20px',
-                boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)',
-                borderRadius: '8px',
-                zIndex: 1000,
-                fontSize: '14px',
-                textAlign: 'center',
-                width: 'max-content', // 
-              }}
-            >
-              {notificationMessage}
-            </div>
-          )
-        }
+          <LoginButton/>
       </div>
-
-      {/* Sub Menu */}
-      {/* key === "health" ? value : value[0] | status = {health : number, hunger : [number, time()], mood: [number, time()]} */}
-      <SubMenu
-        activeMenu={activeMenu}
-        position={{ x: petPosition.x + 10, y: petPosition.y + 170 }} // submenu position
-        status={status}
-        onOptionClick={handleOptionClick}
-        onClose={handleMenuClose}
-        onMouseEnter={() => setIsSubMenuHovered(true)} // Mark submenu as hovered
-        onMouseLeave={() => setIsSubMenuHovered(false)} // Mark submenu as not hovered
-      />
-
-      {/* Popup Window */}
-      <PopupWindow title="Action" content={popupContent} onClose={closePopup} />
-          {/* Login icon */}
-          <LoginButton onClick={() => setShowPopup(true)} />
-
-        
-    </div>
+    )
   );
 };
 

@@ -2,23 +2,56 @@ import React, { useState } from 'react';
 import './Login.css';
 
 
-const Login = ({ onClose, onLoginSuccess }) => {
+const Login = ({ setIsLoggedIn, username, setUsername }) => {
   const [currentPage, setCurrentPage] = useState('login');
-  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
+  // Send API-request to validate user log-in request / create new user-account && log them in simultaneously
+  const handleUserProcessing = async (loginOrRegister) => {
+
+    // Non-null values
     if (username && password) {
-      //simulating login success
-      const user = {
-        username: username,
-        email: 'user@example.com',
-        joinDate: '2024-01-01',
-        avatar: 'https://via.placeholder.com/100', // 
+
+      //simulating login/signup success
+      const requestBody = {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json',
+        }, 
+        body: JSON.stringify({
+          "user_name": username, 
+          "password": password
+        })
+      }
+  
+      try {
+        let url = ""
+        if (loginOrRegister == "login") {
+          url = `${process.env.REACT_APP_BACKEND_URL}/api/auth/login`
+          console.log(true);
+
+        } else if (loginOrRegister == "register") {
+          url = `${process.env.REACT_APP_BACKEND_URL}/api/users`
+        }
+
+        const response = await fetch(url, requestBody);
+        console.log(response)
+
+        const res = await response.json();
+        // If not 200-response-code
+        if (!response.ok) { 
+            throw new Error(`${res.error}`)
+        } 
+        
+        // Successfully (created and) logged in user !!
+        console.log(res.message);
+        setIsLoggedIn(true);
+        alert(res.message);
+  
+      } catch(error) {
+        console.error(error)
+        alert(error)
       };
-      onLoginSuccess(user);
-    } else {
-      alert('Please enter both username and password.');
     }
   };
 
@@ -42,7 +75,7 @@ const Login = ({ onClose, onLoginSuccess }) => {
               onChange={(e) => setPassword(e.target.value)}
               style={inputStyle}
             />
-            <button style={buttonStyle} onClick={handleLogin}>
+            <button style={buttonStyle} onClick={() => handleUserProcessing("login")}>
               Login
             </button>
             <div style={linkContainerStyle}>
@@ -59,11 +92,11 @@ const Login = ({ onClose, onLoginSuccess }) => {
         return (
           <div>
             <h2 style={{ marginBottom: '20px' }}>Register</h2>
-            <input type="text" placeholder="Username" style={inputStyle} />
-            <input type="email" placeholder="Email" style={inputStyle} />
-            <input type="password" placeholder="Password" style={inputStyle} />
-            <input type="password" placeholder="Confirm Password" style={inputStyle} />
-            <button style={buttonStyle} onClick={() => alert('Registered!')}>
+            <input type="text" placeholder="Username" style={inputStyle} vale={username}  onChange={(e) => setUsername(e.target.value)} />
+            {/* <input type="email" placeholder="Email" style={inputStyle} /> */}
+            <input type="password" placeholder="Password" style={inputStyle} value={password} onChange={(e) => setPassword(e.target.value)} />
+            {/* <input type="password" placeholder="Confirm Password" style={inputStyle} /> */}
+            <button style={buttonStyle} onClick={() => {handleUserProcessing("register");}}>
               Register
             </button>
             <button style={linkStyle} onClick={() => setCurrentPage('login')}>
@@ -137,7 +170,6 @@ const Login = ({ onClose, onLoginSuccess }) => {
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           zIndex: 9998,
         }}
-        onClick={onClose}
       ></div>
       <div
         style={{
@@ -155,7 +187,7 @@ const Login = ({ onClose, onLoginSuccess }) => {
         }}
       >
         <button
-          onClick={onClose}
+
           style={{
             position: 'absolute',
             top: '10px',
