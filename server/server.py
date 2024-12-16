@@ -50,7 +50,7 @@ CREATE_USERS_TABLE = (
             user_name TEXT NOT NULL UNIQUE, -- username
             password_hash BYTEA, -- password
             pet_health INT NOT NULL DEFAULT 100, -- pet's current health level | 0 - 100
-            pet_hunger INT NOT NULL DEFAULT 10, -- pet's current hunger level | 0 - 100
+            pet_hunger INT NOT NULL DEFAULT 0, -- pet's current hunger level | 0 - 100
             pet_mood INT NOT NULL DEFAULT 100, -- pet's current mood level | 0 - 100
             hunger_last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- time pet was last fed 
             mood_last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- time pet was last played with / petted
@@ -241,7 +241,7 @@ def userSignUp(): # Log-in or Create New User-account, depending on if it alread
             correct_password = (stored_password_hash == bcrypt.hashpw(password.encode('utf-8'), stored_password_hash))
             if correct_password:
                 cursor.execute("SELECT pet_health, pet_hunger, pet_mood, hunger_last_updated, mood_last_updated from users WHERE user_name=%s", (user_name,)) 
-                pet_health, pet_hunger, pet_mood, hunger_last_updated, mood_last_updated = cursor.fetchall()
+                pet_health, pet_hunger, pet_mood, hunger_last_updated, mood_last_updated = cursor.fetchone()
                 return jsonify({'message': 'Welcome Back!', 'user_name': user_name, "health": pet_health, "hunger": pet_hunger, "mood": pet_mood, "hunger_last_updated": hunger_last_updated, "mood_last_updated": mood_last_updated}), 201  # Log-in Success 
 
             # If wrong password (on the SIGN-UP page, then this user will be assumed to be a different entity,
@@ -315,7 +315,7 @@ def userLogIn():
             correct_password = (stored_password_hash == bcrypt.hashpw(password.encode('utf-8'), stored_password_hash))
             if correct_password:
                 cursor.execute("SELECT pet_health, pet_hunger, pet_mood, hunger_last_updated, mood_last_updated from users WHERE user_name=%s", (user_name,)) 
-                pet_health, pet_hunger, pet_mood, hunger_last_updated, mood_last_updated = cursor.fetchall()
+                pet_health, pet_hunger, pet_mood, hunger_last_updated, mood_last_updated = cursor.fetchone()
                 return jsonify({'message': 'Welcome Back!', 'user_name': user_name, "health": pet_health, "hunger": pet_hunger, "mood": pet_mood, "hunger_last_updated": hunger_last_updated, "mood_last_updated": mood_last_updated}), 201  # Log-in Success 
 
             # Wrong password when logging in
