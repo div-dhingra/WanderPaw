@@ -7,6 +7,8 @@ import json # Module to read JSON objects, and convert them to usable JS-objects
 
 import random # Module to generate random values
 
+import bcrypt # for password hashing
+
 from datetime import datetime
 
 # Import Flask Class/Module/Library
@@ -46,6 +48,7 @@ CREATE_USERS_TABLE = (
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY, -- Unique user identifier for the table (hence SERIAL | unrelated to input)
             user_name TEXT NOT NULL UNIQUE, -- username
+            password_hash BYTEA, -- password
             pet_health INT NOT NULL DEFAULT 100, -- pet's current health level | 0 - 100
             pet_hunger INT NOT NULL DEFAULT 10, -- pet's current hunger level | 0 - 100
             pet_mood INT NOT NULL DEFAULT 100, -- pet's current mood level | 0 - 100
@@ -64,7 +67,11 @@ def setInitialUsersTable():
     row_count = cursor.fetchone()[0]
 
     if row_count == 0:
-        cursor.execute("INSERT INTO users (user_name) VALUES (%s);", ("andrews_covalent_bond",))
+        # Generate cipher-text, w/ unique salt sprinkled on top for randomness...
+        random_salt = bcrypt.gensalt()
+        password_hash = bcrypt.hashpw("cmpe_131".encode('utf-8'), random_salt)
+
+        cursor.execute("INSERT INTO users (user_name, password_hash) VALUES (%s, %s);", ("andrews_covalent_bond", password_hash))
         conn.commit() # Commit this change to GIT in supabase
         print("Initial Users Table Create") 
  
@@ -197,3 +204,131 @@ def updatePetMood(user_name : str):
     except Exception as e: # Handle database exceptions for caught-errors
         conn.rollback() # Undo the committed SQL-changes for this CURRENT SET OF COMMITS / Transaction SESSION
         return jsonify({"error": str(e)}), 500
+
+#  User Sign-up endpoint
+@app.post("/api/users")
+def userSignUp(): # Log-in or Create New User-account, depending on if it already exists.
+   
+    request_header_data = request.get_json()
+    
+    # Get all MANUALLY-required data-fields (columns) to create the user in my table
+    # backend for intercepted, modified requests)
+    user_name =  request_header_data.get("user_name")
+    password = request_header_data.get("password")
+    # password = request_header_data.get("password") # For security, store hash of password (not password explicitly) in my database
+    # or not password 
+
+    # id_pattern = r'^\d{4}$' # 9 digits == librarianID
+    # if not re.match(id_pattern, user_id):
+
+    # No user name provided
+    if not user_name:
+        return jsonify({'error': 'Please provide a username'}), 400
+
+    try: 
+
+        # * Check if this user already exists — if so, return 'Welcome Back' (account already exists),
+        # * instead of duplicating the entry in the table
+        cursor.execute("SELECT * FROM users WHERE user_name = %s", (user_name,))
+        user_exists = cursor.fetchone() 
+
+        # * FIRST: Check If this user already exists (to avoid unnecessary computations if the user doesn't) [i.e., as below]
+        if user_exists:
+
+            # * Get/Fetch password-hash (password CIPHERTEXT w/ un-enc salt sprinkled on top)
+            # * for this existing user_account
+            cursor.execute("SELECT password_hash FROM users WHERE user_name = %s", (user_name,))
+            stored_password_hash = cursor.fetchone()[0] # Tuple of 1 element/column_field | * === tuple of all column_fields for this entry
+            stored_password_hash = bytes(stored_password_hash) # Convert from memory-view format back to bytes-format :)
+
+            # Check if correct password
+            correct_password = (stored_password_hash == bcrypt.hashpw(password.encode('utf-8'), stored_password_hash))
+            if correct_password:
+                cursor.execute("SELECT pet_health, pet_hunger, pet_mood, hunger_last_updated, mood_last_updated from users WHERE user_name=%s", (user_name,)) 
+                pet_health, pet_hunger, pet_mood, hunger_last_updated, mood_last_updated = cursor.fetchall()
+                return jsonify({'message': 'Welcome Back!', 'user_name': user_name, "health": pet_health, "hunger": pet_hunger, "mood": pet_mood, "hunger_last_updated": hunger_last_updated, "mood_last_updated": mood_last_updated}), 201  # Log-in Success 
+
+            # If wrong password (on the SIGN-UP page, then this user will be assumed to be a different entity,
+            # meaning we don't allow duplicated user-names for different users)
+            else:
+                return jsonify({'error': 'Username is taken! Please enter a new username.'}), 409 # Error
+                # return jsonify({'error': 'Invalid Password. Please Try Again!'}), 401  # Log-in Attempt #1 | Try Again
+        
+        # * ELSE: Unique user-name (no constraints violated) | create new user-entry in the table
+        # * Random salt to prevent rainbow-table attacks,
+        # * which map/backtrack common passwords from their STATIC encrypted-text (cipher-text)
+        random_salt = bcrypt.gensalt()
+        
+        # Generate cipher-text, w/ unique salt sprinkled on top for randomness...
+        password_hash = bcrypt.hashpw(password.encode('utf-8'), random_salt)
+
+        # Create NEW, UNIQUE user – all other attributes are defaultly initialized (no need to manually specify)
+        # i.e., insert new-user entry into my database
+        # -- non-serial, non-default values are explicitly inserted
+        cursor.execute( 
+            """
+                INSERT into users (user_name, password_hash)
+                VALUES (%s, %s);
+            """,
+            (user_name, password_hash)
+        )
+        conn.commit()
+
+        # Don't return password_hash (sensitive info)
+        return jsonify({'message': 'Congratulations! You\'ve succesfully made an account!', 'user_name': user_name, "health": 100, "hunger": 0, "mood": 10}), 201  # Sign-Up-Creation-Success  
+
+    except Exception as e:
+        return jsonify({'error': f'{user_name} {password}'}), 500
+
+# User Log-in endpoint (for pre-existing accounts ONLY)
+@app.post("/auth/login")
+def userLogIn():
+    request_header_data = request.get_json()
+    
+    # Get all MANUALLY-required data-fields (columns) to create the user in my table
+    # backend for intercepted, modified requests)
+    user_name =  request_header_data.get("user_name")
+    password = request_header_data.get("password")
+    # password = request_header_data.get("password") # For security, store hash of password (not password explicitly) in my database
+    # or not password 
+
+    # id_pattern = r'^\d{4}$' # 9 digits == librarianID
+    # if not re.match(id_pattern, user_id):
+
+    # No user name provided
+    if not user_name:
+        return jsonify({'error': 'Please provide a username'}), 400
+
+    try: 
+
+        # * Check if this user already exists — if so, return 'Welcome Back' (account already exists),
+        # * instead of duplicating the entry in the table
+        cursor.execute("SELECT * FROM users WHERE user_name = %s", (user_name,))
+        user_exists = cursor.fetchone() 
+
+        # * FIRST: Check If this user already exists (to avoid unnecessary computations if the user doesn't) [i.e., as below]
+        if user_exists:
+
+            # * Get/Fetch password-hash (password CIPHERTEXT w/ un-enc salt sprinkled on top)
+            # * for this existing user_account
+            cursor.execute("SELECT password_hash FROM users WHERE user_name = %s", (user_name,))
+            stored_password_hash = cursor.fetchone()[0] # Tuple of 1 element/column_field | * === tuple of all column_fields for this entry
+            stored_password_hash = bytes(stored_password_hash) # Convert from memory-view format back to bytes-format :)
+
+            # Check if correct password
+            correct_password = (stored_password_hash == bcrypt.hashpw(password.encode('utf-8'), stored_password_hash))
+            if correct_password:
+                cursor.execute("SELECT pet_health, pet_hunger, pet_mood, hunger_last_updated, mood_last_updated from users WHERE user_name=%s", (user_name,)) 
+                pet_health, pet_hunger, pet_mood, hunger_last_updated, mood_last_updated = cursor.fetchall()
+                return jsonify({'message': 'Welcome Back!', 'user_name': user_name, "health": pet_health, "hunger": pet_hunger, "mood": pet_mood, "hunger_last_updated": hunger_last_updated, "mood_last_updated": mood_last_updated}), 201  # Log-in Success 
+
+            # Wrong password when logging in
+            else:
+                return jsonify({'error': 'Invalid Password. Please Try Again!'}), 401  # Log-in Attempt #1 | Try Again
+        
+        # Error: Cannot log-in to a NON-existing account        
+        else:
+            return jsonify({'error': 'This account does not exist. Please create an account to proceed.'}), 409 
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
